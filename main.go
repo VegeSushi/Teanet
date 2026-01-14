@@ -7,7 +7,7 @@ import (
 	"net"
 	"net/http"
 	"strings"
-	"time"
+	"github.com/Knetic/govaluate"
 )
 
 func main() {
@@ -75,6 +75,7 @@ func handleCommand(cmd string, w *bufio.Writer) bool {
 		w.WriteString("Available commands:\r\n")
 		w.WriteString("  help        Show this help\r\n")
 		w.WriteString("  wiki <term> Wikipedia lookup\r\n")
+		w.WriteString("  calc <expr> Evaluate a math expression\r\n")
 		w.WriteString("  quit        Disconnect\r\n")
 
 	case "wiki":
@@ -89,6 +90,27 @@ func handleCommand(cmd string, w *bufio.Writer) bool {
 				w.WriteString(result + "\r\n")
 			}
 		}
+
+	case "calc":
+    	if len(args) < 2 {
+        	w.WriteString("Usage: calc <expression>\r\n")
+    	} else {
+        	exprStr := strings.Join(args[1:], " ")
+
+        	expr, err := govaluate.NewEvaluableExpression(exprStr)
+        	if err != nil {
+            	w.WriteString("Parse error: " + err.Error() + "\r\n")
+            	break
+        	}
+
+        	result, err := expr.Evaluate(nil)
+        	if err != nil {
+            	w.WriteString("Eval error: " + err.Error() + "\r\n")
+            	break
+        	}
+
+        	w.WriteString(fmt.Sprintf("%v\r\n", result))
+    	}
 
 	case "quit", "exit":
 		w.WriteString("Goodbye!\r\n")
